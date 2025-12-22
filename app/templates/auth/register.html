@@ -1,0 +1,51 @@
+{% extends "base.html" %}
+
+{% block title %}Εγγραφή{% endblock %}
+
+{% block content %}
+<div class="flex items-center justify-center min-h-[80vh]">
+    <div class="w-full max-w-md bg-white rounded-lg shadow-md p-8">
+        <h2 class="text-2xl font-bold text-center text-gray-800 mb-6">Δημιουργία Λογαριασμού</h2>
+
+        <form method="POST" action="">
+            {{ form.hidden_tag() }}
+
+            <div class="mb-4">
+                {{ form.email.label(class="block text-gray-700 text-sm font-bold mb-2") }}
+                {% if form.email.errors %}
+                    {{ form.email(class="w-full px-3 py-2 border border-red-500 rounded-lg") }}
+                    <div class="text-red-500 text-xs mt-1">{% for error in form.email.errors %}{{ error }}{% endfor %}</div>
+                {% else %}
+                    {{ form.email(class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-200 focus:outline-none") }}
+                {% endif %}
+            </div>
+
+            <div class="mb-4">
+                {{ form.password.label(class="block text-gray-700 text-sm font-bold mb-2") }}
+                {% if form.password.errors %}
+                    {{ form.password(class="w-full px-3 py-2 border border-red-500 rounded-lg") }}
+                    <div class="text-red-500 text-xs mt-1">{% for error in form.password.errors %}{{ error }}{% endfor %}</div>
+                {% else %}
+                    {{ form.password(class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-200 focus:outline-none") }}
+                {% endif %}
+            </div>
+
+            <div class="mb-6">
+                {{ form.confirm_password.label(class="block text-gray-700 text-sm font-bold mb-2") }}
+                {% if form.confirm_password.errors %}
+                    {{ form.confirm_password(class="w-full px-3 py-2 border border-red-500 rounded-lg") }}
+                    <div class="text-red-500 text-xs mt-1">{% for error in form.confirm_password.errors %}{{ error }}{% endfor %}</div>
+                {% else %}
+                    {{ form.confirm_password(class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-200 focus:outline-none") }}
+                {% endif %}
+            </div>
+
+            {{ form.submit(class="w-full bg-blue-600 text-white font-bold py-2 px-4 rounded-lg hover:bg-blue-700 transition duration-200 cursor-pointer") }}
+        </form>
+
+        <p class="mt-4 text-center text-sm text-gray-600">
+            Έχετε ήδη λογαριασμό; <a href="{{ url_for('auth.login') }}" class="text-blue-600 hover:underline">Συνδεθείτε</a>.
+        </p>
+    </div>
+</div>
+{% endblock %}
