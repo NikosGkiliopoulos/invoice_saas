@@ -1,0 +1,118 @@
+{% extends "base.html" %}
+
+{% block title %}Τα Παραστατικά μου{% endblock %}
+
+{% block content %}
+<div class="max-w-7xl mx-auto mt-8">
+
+    <div class="flex justify-between items-center mb-6">
+        <h2 class="text-2xl font-bold text-gray-800">Λίστα Παραστατικών</h2>
+        <a href="{{ url_for('main.new_invoice') }}" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded shadow flex items-center gap-2">
+            <span>+</span> Νέο Τιμολόγιο
+        </a>
+    </div>
+
+    <div class="bg-white shadow-md rounded-lg overflow-hidden">
+        <table class="min-w-full leading-normal">
+            <thead>
+                <tr>
+                    <th class="px-5 py-3 border-b-2 border-gray-200 bg-gray-100 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
+                        Ημ/νια
+                    </th>
+                    <th class="px-5 py-3 border-b-2 border-gray-200 bg-gray-100 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
+                        Αριθμός
+                    </th>
+                    <th class="px-5 py-3 border-b-2 border-gray-200 bg-gray-100 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
+                        Πελάτης
+                    </th>
+                    <th class="px-5 py-3 border-b-2 border-gray-200 bg-gray-100 text-right text-xs font-semibold text-gray-600 uppercase tracking-wider">
+                        Καθαρή Αξία
+                    </th>
+                    <th class="px-5 py-3 border-b-2 border-gray-200 bg-gray-100 text-right text-xs font-semibold text-gray-600 uppercase tracking-wider">
+                        ΦΠΑ
+                    </th>
+                    <th class="px-5 py-3 border-b-2 border-gray-200 bg-gray-100 text-right text-xs font-semibold text-gray-600 uppercase tracking-wider">
+                        Σύνολο
+                    </th>
+                    <th class="px-5 py-3 border-b-2 border-gray-200 bg-gray-100 text-center text-xs font-semibold text-gray-600 uppercase tracking-wider">
+                        Κατάσταση
+                    </th>
+                    <th class="px-5 py-3 border-b-2 border-gray-200 bg-gray-100"></th>
+                </tr>
+            </thead>
+           <tbody>
+                {% for inv in invoices %}
+                <tr class="hover:bg-gray-50 border-b border-gray-200">
+                    <td class="px-5 py-4 text-sm text-gray-700">
+                        {{ inv.issue_date.strftime('%d/%m/%Y') }}
+                    </td>
+
+                    <td class="px-5 py-4 text-sm font-bold text-gray-800">
+                        #{{ inv.number }} <span class="text-xs font-normal text-gray-500">({{ inv.series }})</span>
+                    </td>
+
+                    <td class="px-5 py-4 text-sm text-gray-700">
+                        {{ inv.customer.name }}
+                    </td>
+
+                    <td class="px-5 py-4 text-sm text-right text-gray-700">
+                        {{ "%.2f"|format(inv.net_value) }} €
+                    </td>
+
+                    <td class="px-5 py-4 text-sm text-right text-gray-500">
+                        {{ "%.2f"|format(inv.vat_value) }} €
+                    </td>
+
+                    <td class="px-5 py-4 text-sm text-right font-bold text-blue-600">
+                        {{ "%.2f"|format(inv.total_value) }} €
+                    </td>
+
+                    <td class="px-5 py-4 text-center">
+                        {% if inv.mydata_mark %}
+                        <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800">
+                            Στάλθηκε
+                        </span>
+                        {% else %}
+                        <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-gray-100 text-gray-800">
+                            Πρόχειρο
+                        </span>
+                        {% endif %}
+                    </td>
+
+                    <td class="px-5 py-4 text-right text-sm">
+                        <div class="flex flex-col items-end gap-2">
+                            <a href="{{ url_for('main.print_invoice', invoice_id=inv.id) }}" target="_blank" class="text-blue-600 hover:text-blue-900 font-bold text-xs uppercase cursor-pointer">
+                                Προβολή PDF
+                            </a>
+                            {% if not inv.mydata_mark %}
+                                <form action="{{ url_for('main.send_to_mydata', invoice_id=inv.id) }}" method="POST" onsubmit="return confirm('Είστε σίγουροι ότι θέλετε να στείλετε το παραστατικό στην ΑΑΔΕ;');">
+                                    <button type="submit" class="flex items-center gap-1 text-white bg-green-600 hover:bg-green-700 px-3 py-1 rounded text-xs font-bold shadow transition duration-150">
+                                        <span>☁️</span> myDATA
+                                    </button>
+                                </form>
+                            {% else %}
+                                <div class="text-right">
+                                    <div class="flex items-center justify-end text-green-600 text-xs font-bold mb-1">
+                                        <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
+                                        Επιτυχία
+                                    </div>
+                                    <div class="text-[10px] text-gray-500 font-mono bg-gray-50 px-2 py-1 rounded border border-gray-200" title="UID: {{ inv.mydata_uid }}">
+                                        MARK: {{ inv.mydata_mark }}
+                                    </div>
+                                </div>
+                            {% endif %}
+                        </div>
+                    </td>
+                </tr>
+                {% else %}
+                <tr>
+                    <td colspan="8" class="px-5 py-10 text-center text-gray-500">
+                        Δεν βρέθηκαν παραστατικά. Ξεκινήστε εκδίδοντας το πρώτο σας τιμολόγιο!
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

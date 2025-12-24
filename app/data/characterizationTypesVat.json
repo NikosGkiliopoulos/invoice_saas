@@ -1,0 +1,51 @@
+[
+    {
+        "code": "VAT_NORMAL",
+        "description": "Κανονικός συντελεστής ΦΠΑ",
+        "metadata": {
+            "rate": 24
+        }
+    },
+    {
+        "code": "VAT_REDUCED_13",
+        "description": "Μειωμένος συντελεστής ΦΠΑ 13%",
+        "metadata": {
+            "rate": 13
+        }
+    },
+    {
+        "code": "VAT_REDUCED_6",
+        "description": "Μειωμένος συντελεστής ΦΠΑ 6%",
+        "metadata": {
+            "rate": 6
+        }
+    },
+    {
+        "code": "VAT_EXEMPT",
+        "description": "Απαλλαγή ΦΠΑ",
+        "metadata": {
+            "rate": 0
+        }
+    },
+    {
+        "code": "VAT_NON_TAXABLE",
+        "description": "Μη υπόχρεος ΦΠΑ",
+        "metadata": {
+            "rate": 0
+        }
+    },
+    {
+        "code": "VAT_SPECIAL",
+        "description": "Ειδική περίπτωση ΦΠΑ",
+        "metadata": {
+            "rate": 0
+        }
+    },
+    {
+        "code": "VAT_REVERSE_CHARGE",
+        "description": "Αντίστροφη χρέωση ΦΠΑ",
+        "metadata": {
+            "rate": 0
+        }
+    }
+]

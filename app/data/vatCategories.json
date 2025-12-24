@@ -1,0 +1,82 @@
+[
+    {
+        "code": "1",
+        "description": "ΦΠΑ συντελεστής 24%",
+        "metadata": {
+            "defaultValue": 24.00,
+            "defaultValueType": "percent"
+        }
+    },
+    {
+        "code": "2",
+        "description": "ΦΠΑ συντελεστής 13%",
+        "metadata": {
+            "defaultValue": 13.00,
+            "defaultValueType": "percent"
+        }
+    },
+    {
+        "code": "3",
+        "description": "ΦΠΑ συντελεστής 6% ",
+        "metadata": {
+            "defaultValue": 6.00,
+            "defaultValueType": "percent"
+        }
+    },
+    {
+        "code": "4",
+        "description": "ΦΠΑ συντελεστής 17%",
+        "metadata": {
+            "defaultValue": 17.00,
+            "defaultValueType": "percent"
+        }
+    },
+    {
+        "code": "5",
+        "description": "ΦΠΑ συντελεστής 9%",
+        "metadata": {
+            "defaultValue": 9.00,
+            "defaultValueType": "percent"
+        }
+    },
+    {
+        "code": "6",
+        "description": "ΦΠΑ συντελεστής 4%",
+        "metadata": {
+            "defaultValue": 4.00,
+            "defaultValueType": "percent"
+        }
+    },
+    {
+        "code": "7",
+        "description": "Άνευ Φ.Π.Α.",
+        "metadata": {
+            "defaultValue": 0.00,
+            "defaultValueType": "percent"
+        }
+    },
+    {
+        "code": "8",
+        "description": "Εγγραφές χωρίς ΦΠΑ (πχ Μισθοδοσία, Αποσβέσεις)",
+        "metadata": {
+            "defaultValue": 0.00,
+            "defaultValueType": "percent"
+        }
+    },
+    {
+        "code": "9",
+        "description": "ΦΠΑ συντελεστής 3% (αρ.31 ν.5057/2023)",
+        "metadata": {
+            "defaultValue": 3.00,
+            "defaultValueType": "percent"
+        }
+    },
+    {
+        "code": "10",
+        "description": "ΦΠΑ συντελεστής 4% (αρ.31 ν.5057/2023)",
+        "metadata": {
+            "defaultValue": 4.00,
+            "defaultValueType": "percent"
+        }
+    }
+]

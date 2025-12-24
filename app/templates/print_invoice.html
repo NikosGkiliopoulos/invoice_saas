@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="el">
+<head>
+    <meta charset="UTF-8">
+    <title>Τιμολόγιο #{{ invoice.number }}</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @media print {
+            @page {
+                margin: 0;
+                size: auto;
+            }
+            body {
+                margin: 1.6cm; /* Δίνει 'αέρα' στο περιεχόμενο */
+            }
+            /* Ειδική εντολή για απόκρυψη headers/footers */
+            header, footer, .no-print { display: none !important; }
+        }
+    </style>
+</head>
+<body class="bg-gray-100 p-8">
+
+    <div class="max-w-4xl mx-auto mb-6 flex justify-between no-print">
+        <a href="{{ url_for('main.invoices') }}" class="text-blue-600 hover:underline">← Πίσω στη λίστα</a>
+        <button onclick="window.print()" class="bg-blue-600 text-white px-4 py-2 rounded shadow hover:bg-blue-700 font-bold">
+            🖨️ Εκτύπωση / Αποθήκευση PDF
+        </button>
+    </div>
+
+    <div class="max-w-4xl mx-auto bg-white shadow-lg p-10 rounded-lg min-h-[1000px] relative">
+
+        <div class="flex justify-between items-start border-b pb-8 mb-8">
+            <div>
+                <h1 class="text-3xl font-bold text-gray-800 uppercase">{{ company.company_title or 'Η ΕΤΑΙΡΕΙΑ ΜΟΥ' }}</h1>
+                <p class="text-gray-600">{{ company.profession }}</p>
+                <p class="text-gray-600">{{ company.address }}</p>
+                <p class="text-gray-600">ΑΦΜ: {{ company.afm }} - ΔΟΥ: {{ company.doy }}</p>
+            </div>
+            <div class="text-right">
+                <h2 class="text-2xl font-bold text-gray-700 uppercase">
+                    {% if invoice.invoice_type == '1.1' %}
+                        ΤΙΜΟΛΟΓΙΟ ΠΩΛΗΣΗΣ
+                    {% elif invoice.invoice_type == '2.1' %}
+                        ΤΙΜΟΛΟΓΙΟ ΠΑΡΟΧΗΣ
+                    {% else %}
+                        ΤΙΜΟΛΟΓΙΟ ({{ invoice.invoice_type }})
+                    {% endif %}
+                </h2>
+                <p class="text-gray-500 text-sm">Αριθμός: <span class="text-gray-800 font-bold">#{{ invoice.number }}</span></p>
+                <p class="text-gray-500 text-sm">Σειρά: <span class="text-gray-800 font-bold">{{ invoice.series }}</span></p>
+                <p class="text-gray-500 text-sm">Ημερομηνία: {{ invoice.issue_date.strftime('%d/%m/%Y') }}</p>
+                <p class="text-gray-500 text-sm mt-2">
+                    Τρόπος Πληρωμής:
+                    <span class="text-gray-800 font-bold">
+                        {% if invoice.payment_method == '1' %} Επαγγ. Λογαριασμός Πληρωμών
+                        {% elif invoice.payment_method == '3' %} Μετρητά
+                        {% elif invoice.payment_method == '5' %} Web Banking
+                        {% elif invoice.payment_method == '7' %} POS / e-POS
+                        {% else %} {{ invoice.payment_method }}
+                        {% endif %}
+                    </span>
+                </p>
+            </div>
+        </div>
+
+        <div class="mb-8 bg-gray-50 p-4 rounded border border-gray-200">
+            <h3 class="text-xs font-bold text-gray-500 uppercase mb-2">ΣΤΟΙΧΕΙΑ ΠΕΛΑΤΗ</h3>
+            <p class="font-bold text-lg text-gray-800">{{ invoice.customer.name }}</p>
+            <p class="text-gray-600">{{ invoice.customer.profession }}</p>
+            <p class="text-gray-600">{{ invoice.customer.address }}, {{ invoice.customer.city }}</p>
+            <p class="text-gray-600">ΑΦΜ: {{ invoice.customer.afm }}</p>
+        </div>
+
+        <table class="w-full mb-8">
+            <thead>
+                <tr class="text-left border-b-2 border-gray-300">
+                    <th class="py-2 text-sm text-gray-600 uppercase">Περιγραφη</th>
+                    <th class="py-2 text-sm text-gray-600 uppercase text-right">Ποσοτητα</th>
+                    <th class="py-2 text-sm text-gray-600 uppercase text-right">Τιμη Μοναδας</th>
+                    <th class="py-2 text-sm text-gray-600 uppercase text-right">ΦΠΑ</th>
+                    <th class="py-2 text-sm text-gray-600 uppercase text-right">Συνολο</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for item in invoice.items %}
+                <tr class="border-b border-gray-100">
+                    <td class="py-3">{{ item.title }}</td>
+                    <td class="py-3 text-right">{{ item.quantity }}</td>
+                    <td class="py-3 text-right">{{ "%.2f"|format(item.unit_price) }} €</td>
+                    <td class="py-3 text-right">{{ "%.0f"|format(item.vat_percent) }}%</td>
+                    <td class="py-3 text-right font-bold">{{ "%.2f"|format(item.net_value) }} €</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+
+        <div class="flex justify-end mb-12">
+            <div class="w-1/3">
+                <div class="flex justify-between mb-2">
+                    <span class="text-gray-600">Καθαρή Αξία:</span>
+                    <span class="font-bold">{{ "%.2f"|format(invoice.net_value) }} €</span>
+                </div>
+                <div class="flex justify-between mb-2">
+                    <span class="text-gray-600">ΦΠΑ:</span>
+                    <span class="font-bold">{{ "%.2f"|format(invoice.vat_value) }} €</span>
+                </div>
+                <div class="flex justify-between border-t-2 border-gray-800 pt-2 text-lg">
+                    <span class="font-bold">Γενικό Σύνολο:</span>
+                    <span class="font-bold text-blue-600">{{ "%.2f"|format(invoice.total_value) }} €</span>
+                </div>
+            </div>
+        </div>
+
+        {% if invoice.mydata_mark %}
+        <div class="border-t-2 border-dashed border-gray-300 pt-6">
+            <div class="flex items-center justify-between">
+                <div>
+                    <h4 class="font-bold text-gray-800 mb-1">myDATA AADE</h4>
+                    <p class="text-sm text-gray-600 font-mono">UID: {{ invoice.mydata_uid }}</p>
+                    <p class="text-sm text-gray-600 font-mono">MARK: <strong>{{ invoice.mydata_mark }}</strong></p>
+                </div>
+
+                <div class="text-center">
+                    {% if qr_code %}
+                        <img src="data:image/png;base64,{{ qr_code }}" alt="QR Code" class="w-24 h-24 border border-gray-300 p-1">
+                    {% else %}
+                        <div class="bg-white border border-gray-300 p-2 w-24 h-24 flex items-center justify-center">
+                           <span class="text-xs text-gray-400">DRAFT</span>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+        {% endif %}
+
+    </div>
+</body>
+</html>

@@ -35,8 +35,8 @@ class User(UserMixin, db.Model):
     doy = db.Column(db.String(100), nullable=True)
 
     # --- myDATA Credentials (Encrypted) ---
-    aade_user_id_encrypted = db.Column(db.String(500), nullable=True)
-    aade_api_key_encrypted = db.Column(db.String(500), nullable=True)
+    aade_user_id = db.Column(db.String(500), nullable=True)
+    aade_key = db.Column(db.String(500), nullable=True)
 
     # --- Relationships ---
     # Τώρα αυτό θα δουλέψει επειδή υπάρχει το ForeignKey στο plan_id

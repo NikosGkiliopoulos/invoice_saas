@@ -1,0 +1,63 @@
+{% extends "base.html" %}
+
+{% block title %}Ρυθμίσεις Εταιρείας{% endblock %}
+
+{% block content %}
+<div class="max-w-xl mx-auto mt-10">
+    <div class="bg-white shadow-md rounded px-8 pt-6 pb-8 mb-4">
+        <h2 class="text-2xl font-bold mb-6 text-gray-800">Στοιχεία Εταιρείας</h2>
+
+        <form method="POST">
+            {{ form.hidden_tag() }}
+
+            <div class="mb-4">
+                {{ form.company_title.label(class="block text-gray-700 text-sm font-bold mb-2") }}
+                {{ form.company_title(class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline") }}
+                {% for error in form.company_title.errors %}
+                    <span class="text-red-500 text-xs italic">{{ error }}</span>
+                {% endfor %}
+            </div>
+
+            <div class="flex gap-4 mb-4">
+                <div class="w-1/2">
+                    {{ form.afm.label(class="block text-gray-700 text-sm font-bold mb-2") }}
+                    {{ form.afm(class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline") }}
+                    {% for error in form.afm.errors %}
+                        <span class="text-red-500 text-xs italic">{{ error }}</span>
+                    {% endfor %}
+                </div>
+                <div class="w-1/2">
+                    {{ form.doy.label(class="block text-gray-700 text-sm font-bold mb-2") }}
+                    {{ form.doy(class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline") }}
+                </div>
+            </div>
+
+            <div class="mb-4">
+                {{ form.profession.label(class="block text-gray-700 text-sm font-bold mb-2") }}
+                {{ form.profession(class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline") }}
+            </div>
+
+            <div class="mb-4">
+                {{ form.address.label(class="block text-gray-700 text-sm font-bold mb-2") }}
+                {{ form.address(class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline") }}
+            </div>
+
+            <div class="mb-4">
+                {{ form.aade_user_id.label(class="block text-gray-700 text-sm font-bold mb-2") }}
+                {{ form.aade_user_id(class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline") }}
+
+            </div>
+
+            <div class="mb-4">
+                {{ form.aade_key.label(class="block text-gray-700 text-sm font-bold mb-2") }}
+                {{ form.aade_key(class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline") }}
+
+            </div>
+
+            <div class="flex items-center justify-between mt-6">
+                {{ form.submit(class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline cursor-pointer") }}
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}
