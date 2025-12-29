@@ -23,6 +23,7 @@ class Customer(db.Model):
     city = db.Column(db.String(100), nullable=True)
     postal_code = db.Column(db.String(20), nullable=True)
     country_code = db.Column(db.String(2), default='GR')  # ISO Code
+    doy = db.Column(db.String(100), nullable=True)
 
     # --- Κατηγοριοποίηση & Επαφή ---
     customer_type = db.Column(db.String(20), default='B2B')  # Επιλογές: 'B2B', 'B2C'

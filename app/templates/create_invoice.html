@@ -1,6 +1,6 @@
 {% extends "base.html" %}
 
-{% block title %}Νέο Τιμολόγιο{% endblock %}
+{% block title %}Νέο Τιμολόγιο / Απόδειξη{% endblock %}
 
 {% block content %}
 <div class="max-w-6xl mx-auto bg-white p-8 rounded-lg shadow-lg mt-6 border border-gray-200">
@@ -8,7 +8,7 @@
     <div class="flex justify-between items-center mb-8 border-b pb-4">
         <div>
             <h2 class="text-2xl font-bold text-gray-800">Έκδοση Παραστατικού</h2>
-            <p class="text-sm text-gray-500">Δημιουργία νέου τιμολογίου πώλησης (1.1)</p>
+            <p class="text-sm text-gray-500">Δημιουργία νέου Τιμολογίου (1.1) ή Απόδειξης (11.1)</p>
         </div>
         <div class="text-right">
             <span class="bg-blue-100 text-blue-800 px-4 py-2 rounded-full text-sm font-bold shadow-sm">Σειρά Α</span>
@@ -21,8 +21,14 @@
             <label class="block text-xs font-bold text-gray-500 uppercase tracking-wide mb-2">Πελάτης</label>
             <select id="customerSelect" class="w-full border border-gray-300 p-2.5 rounded shadow-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white">
                 <option value="">-- Επιλογή Πελάτη --</option>
+
+                <option value="retail" class="font-bold text-blue-700 bg-blue-50 py-2">
+                    🛒 ΠΕΛΑΤΗΣ ΛΙΑΝΙΚΗΣ (Απόδειξη)
+                </option>
+                <option disabled>────────────────────────</option>
+
                 {% for customer in customers %}
-                <option value="{{ customer.id }}">{{ customer.name }} ({{ customer.afm or 'Λιανική' }})</option>
+                <option value="{{ customer.id }}">{{ customer.name }} ({{ customer.afm or '---' }})</option>
                 {% endfor %}
             </select>
         </div>
@@ -36,7 +42,7 @@
             <label class="block text-xs font-bold text-gray-500 uppercase tracking-wide mb-2">Τρόπος Πληρωμής</label>
             <select id="paymentMethod" class="w-full border border-gray-300 p-2.5 rounded shadow-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white">
                 {% for pm in payment_methods %}
-                    <option value="{{ pm.code }}" {% if pm.code == '5' %}selected{% endif %}>
+                    <option value="{{ pm.code }}" {% if pm.code == '3' %}selected{% endif %}>
                         {{ pm.description }}
                     </option>
                 {% endfor %}
@@ -90,7 +96,7 @@
                 <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
                 </svg>
-                ΕΚΔΟΣΗ ΤΙΜΟΛΟΓΙΟΥ
+                ΕΚΔΟΣΗ ΠΑΡΑΣΤΑΤΙΚΟΥ
             </button>
         </div>
     </div>
@@ -165,17 +171,11 @@
         const product = availableProducts.find(p => p.id == productId);
 
         if (product) {
-            // Συμπλήρωσε Τιμή
             row.querySelector('.price-input').value = product.price.toFixed(2);
-
-            // Συμπλήρωσε ΦΠΑ
             const vatSelect = row.querySelector('.vat-input');
-            vatSelect.value = product.vat; // Επιλέγει π.χ. 24
-
-            // Κράτα τον τίτλο (για αποστολή)
+            vatSelect.value = product.vat;
             row.querySelector('.product-title').value = product.title;
         } else {
-            // Αν ξε-επιλέξει
             row.querySelector('.price-input').value = "0.00";
             row.querySelector('.product-title').value = "";
         }
@@ -185,8 +185,6 @@
     // 4. Αφαίρεση Γραμμής
     function removeRow(btn) {
         const row = btn.closest('tr');
-        // Αν είναι η τελευταία γραμμή, μην την σβήνεις τελείως, απλά καθάρισε την (προαιρετικό UX)
-        // Εδώ την σβήνουμε:
         row.remove();
         calcTotals();
     }
@@ -204,14 +202,12 @@
             const lineNet = qty * price;
             const lineVat = lineNet * (vatPct / 100);
 
-            // Ενημέρωση γραμμής (Σύνολο με ΦΠΑ)
             row.querySelector('.row-total').innerText = (lineNet + lineVat).toFixed(2) + ' €';
 
             totalNet += lineNet;
             totalVat += lineVat;
         });
 
-        // Ενημέρωση Footer
         document.getElementById('displayNet').innerText = totalNet.toFixed(2) + ' €';
         document.getElementById('displayVat').innerText = totalVat.toFixed(2) + ' €';
         document.getElementById('displayTotal').innerText = (totalNet + totalVat).toFixed(2) + ' €';
@@ -225,19 +221,16 @@
         const paymentMethod = document.getElementById('paymentMethod').value;
 
         const items = [];
-        let hasError = false;
 
         document.querySelectorAll('#invoiceItems tr').forEach(row => {
             const productSelect = row.querySelector('.product-select');
-
-            // Αν δεν έχει επιλέξει προϊόν, το αγνοούμε ή πετάμε error;
             if (!productSelect.value) return;
 
             const vatSelect = row.querySelector('.vat-input');
             const selectedOption = vatSelect.options[vatSelect.selectedIndex];
             const vatCat = selectedOption.getAttribute('data-cat');
 
-            // Τίτλος: Είτε από το select text, είτε custom
+            // Τίτλος: Είτε από το select text (αν υπάρχει custom text input θα έμπαινε εδώ)
             const title = productSelect.options[productSelect.selectedIndex].text;
 
             items.push({
@@ -253,31 +246,26 @@
         if (items.length === 0) return alert('Προσθέστε τουλάχιστον ένα προϊόν/υπηρεσία!');
 
         const payload = {
-            customer_id: customerId,
+            customer_id: customerId, // Αν είναι λιανική, θα στείλει 'retail'
             date: document.getElementById('invoiceDate').value,
-            payment_method: paymentMethod, // Στέλνουμε και τον τρόπο πληρωμής
+            payment_method: paymentMethod,
             items: items
         };
 
-        // UI Feedback: Disable button
         const btn = document.querySelector('button[onclick="saveInvoice()"]');
         const originalText = btn.innerText;
         btn.disabled = true;
-        btn.innerText = "Παρακαλώ περιμένετε...";
+        btn.innerText = "Έκδοση...";
 
         try {
             const res = await fetch('/invoices/new', {
                 method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
-                    // Αν είχαμε CSRF token θα έμπαινε εδώ
-                },
+                headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(payload)
             });
             const data = await res.json();
 
             if (data.success) {
-                // Επιτυχία
                 window.location.href = data.redirect_url;
             } else {
                 alert('Σφάλμα: ' + (data.message || 'Άγνωστο λάθος'));
@@ -292,7 +280,6 @@
         }
     }
 
-    // Προσθήκη πρώτης γραμμής κατά την εκκίνηση
     window.addEventListener('DOMContentLoaded', (event) => {
         addRow();
     });

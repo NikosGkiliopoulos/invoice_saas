@@ -16,6 +16,7 @@ from app.services.my_data_api import MyDataAPI
 import qrcode
 from io import BytesIO
 import base64
+from app.services.viva_pos import VivaTerminalService  # <-- ΝΕΟ IMPORT
 
 
 # Η αρχική σελίδα (Dashboard)
@@ -156,25 +157,60 @@ def new_invoice():
         try:
             data = request.get_json()
 
-            # Έλεγχος αν επιλέχθηκε πελάτης
-            if not data.get('customer_id'):
+            # Τι επιλέχθηκε στο πεδίο πελάτη; (Μπορεί να είναι ID ή 'retail')
+            customer_selection = data.get('customer_id')
+
+            if not customer_selection:
                 return jsonify({'success': False, 'message': 'Δεν επιλέχθηκε πελάτης.'}), 400
 
-            # Α. Βρίσκουμε τον επόμενο αριθμό
+            # --- ΛΟΓΙΚΗ ΕΠΙΛΟΓΗΣ ΠΕΛΑΤΗ ---
+            if customer_selection == 'retail':
+                # Α. ΠΕΡΙΠΤΩΣΗ ΛΙΑΝΙΚΗΣ
+                cust_id = None  # Δεν συνδέεται με ID στη βάση
+                inv_type = '11.1'  # Απόδειξη Λιανικής Πώλησης
+
+                # Στοιχεία Snapshot (Καρφωτά)
+                snap_name = "Πελάτης Λιανικής"
+                snap_afm = ""
+                snap_address = ""
+                snap_doy = ""
+            else:
+                # Β. ΠΕΡΙΠΤΩΣΗ ΚΑΝΟΝΙΚΟΥ ΠΕΛΑΤΗ (ΤΙΜΟΛΟΓΙΟ)
+                customer = Customer.query.get(int(customer_selection))
+                if not customer:
+                    return jsonify({'success': False, 'message': 'Ο πελάτης δεν βρέθηκε.'}), 404
+
+                cust_id = customer.id
+                inv_type = '1.1'  # Τιμολόγιο Πώλησης
+
+                # Στοιχεία Snapshot (Από τη βάση)
+                snap_name = customer.name
+                snap_afm = customer.afm
+                snap_address = customer.address
+                snap_doy = customer.doy
+
+            # Γ. Βρίσκουμε τον επόμενο αριθμό
             last_invoice = Invoice.query.filter_by(user_id=current_user.id) \
                 .order_by(Invoice.number.desc()) \
                 .first()
             next_number = (last_invoice.number + 1) if last_invoice else 1
 
-            # Β. Δημιουργία της Κεφαλίδας (Invoice)
+            # Δ. Δημιουργία της Κεφαλίδας (Invoice)
             new_invoice = Invoice(
                 user_id=current_user.id,
-                customer_id=int(data['customer_id']),
+                customer_id=cust_id,  # Μπορεί να είναι None (αν είναι λιανική)
+
+                # Αποθήκευση στοιχείων κειμένου (Snapshot)
+                customer_name=snap_name,
+                customer_afm=snap_afm,
+                customer_address=snap_address,
+                customer_doy=snap_doy,
+
                 series='A',
                 number=next_number,
-                invoice_type='1.1',  # Τιμολόγιο Πώλησης
+                invoice_type=inv_type,  # 1.1 ή 11.1 αυτόματα
                 issue_date=datetime.strptime(data['date'], '%Y-%m-%d').date(),
-                payment_method=data.get('payment_method', '3'),
+                payment_method=data.get('payment_method', '3'),  # 3=Μετρητά, 7=POS (θα έρθει από τη φόρμα)
                 status='draft',
                 net_value=0.0,
                 vat_value=0.0,
@@ -184,7 +220,7 @@ def new_invoice():
             db.session.add(new_invoice)
             db.session.flush()
 
-            # Γ. Δημιουργία των Γραμμών (Items)
+            # Ε. Δημιουργία των Γραμμών (Items)
             total_net = 0.0
             total_vat = 0.0
 
@@ -196,6 +232,11 @@ def new_invoice():
                 line_net = qty * price
                 line_vat_amount = line_net * (vat_pct / 100)
 
+                if inv_type == '11.1':
+                    e3_code = 'E3_561_003'
+                else:
+                    e3_code = 'E3_561_001'
+
                 new_item = InvoiceItem(
                     invoice_id=new_invoice.id,
                     product_id=int(item_data['product_id']) if item_data['product_id'] else None,
@@ -203,32 +244,33 @@ def new_invoice():
                     quantity=qty,
                     unit_price=price,
                     vat_percent=vat_pct,
-                    vat_category=int(item_data['vat_category']), # Το παίρνουμε από το JS
+                    vat_category=int(item_data['vat_category']),
 
                     # Υπολογισμένα πεδία
                     net_value=line_net,
                     vat_amount=line_vat_amount,
 
-                    # --- ΣΗΜΑΝΤΙΚΗ ΑΛΛΑΓΗ ΓΙΑ ΝΑ ΜΗ ΧΤΥΠΑΕΙ ΤΟ MYDATA ---
-                    measurement_unit='1', # 1 = Τεμάχια (κωδικός ΑΑΔΕ)
-                    classification_type='E3_561_001', # Πωλήσεις Αγαθών και Υπηρεσιών
-                    classification_category='category1_1' # Έσοδα από Πωλήσεις Εμπορευμάτων (Το 'category2_1' ήταν λάθος)
+                    # Σταθερά πεδία myDATA (όπως τα είχες)
+                    measurement_unit='1',
+                    classification_type=e3_code,
+                    classification_category='category1_1'
                 )
 
                 db.session.add(new_item)
                 total_net += line_net
                 total_vat += line_vat_amount
 
-            # Δ. Ενημέρωση των συνόλων
+            # ΣΤ. Ενημέρωση των συνόλων
             new_invoice.net_value = total_net
             new_invoice.vat_value = total_vat
             new_invoice.total_value = total_net + total_vat
 
             db.session.commit()
 
+            msg_type = "Απόδειξη" if inv_type == '11.1' else "Τιμολόγιο"
             return jsonify({
                 'success': True,
-                'message': f'Το Τιμολόγιο #{next_number} δημιουργήθηκε επιτυχώς!',
+                'message': f'Η {msg_type} #{next_number} δημιουργήθηκε επιτυχώς!',
                 'redirect_url': url_for('main.invoices')
             })
 
@@ -241,7 +283,6 @@ def new_invoice():
     customers = Customer.query.filter_by(user_id=current_user.id).all()
     products = ProductService.query.filter_by(user_id=current_user.id, is_active=True).all()
 
-    # --- ΦΟΡΤΩΣΗ ΟΛΩΝ ΤΩΝ JSON ΔΕΔΟΜΕΝΩΝ ---
     payment_methods = DataLoader.get_payment_methods()
     vat_categories = DataLoader.get_vat_categories()
     quantity_types = DataLoader.get_quantity_types()
@@ -385,3 +426,64 @@ def print_invoice(invoice_id):
         qr_b64 = base64.b64encode(buffered.getvalue()).decode("utf-8")
 
     return render_template('print_invoice.html', invoice=invoice, company=company, qr_code=qr_b64)
+
+
+@main.route('/invoices/<int:invoice_id>/pay-pos', methods=['POST'])
+@login_required
+def pay_invoice_pos(invoice_id):
+    """
+    Στέλνει εντολή στο τερματικό για πληρωμή του συγκεκριμένου τιμολογίου.
+    """
+    # 1. Βρίσκουμε το τιμολόγιο
+    invoice = Invoice.query.get_or_404(invoice_id)
+
+    # Ασφάλεια: Ανήκει στον χρήστη;
+    if invoice.user_id != current_user.id:
+        return jsonify({'success': False, 'message': 'Δεν έχετε δικαίωμα πρόσβασης.'}), 403
+
+    # Έλεγχος αν έχει ήδη πληρωθεί
+    if invoice.is_paid:
+        return jsonify({'success': False, 'message': 'Το τιμολόγιο είναι ήδη πληρωμένο!'}), 400
+
+    try:
+        # 2. Εκκίνηση Viva Service
+        viva_service = VivaTerminalService()
+
+        print(f"💳 Εκκίνηση POS για #{invoice.number} - Ποσό: {invoice.total_value}€")
+
+        # Κλήση στο τερματικό
+        # Reference: INV-{ID} για να το αναγνωρίζεις στο Viva Dashboard
+        result = viva_service.process_payment(
+            amount_euros=invoice.total_value,
+            reference_id=f"INV-{invoice.id}"
+        )
+
+        # 3. Διαχείριση Αποτελέσματος
+        if result['success']:
+            # --- ΕΠΙΤΥΧΙΑ ---
+            viva_data = result['data']
+
+            # Ενημέρωση Βάσης
+            invoice.is_paid = True
+            invoice.payment_method = '5'  # 5 = Κάρτα (για το myDATA)
+            invoice.transaction_id = viva_data.get('transactionId')
+            invoice.paid_at = datetime.now()
+
+            db.session.commit()
+
+            print(f"✅ Πληρώθηκε! Transaction ID: {invoice.transaction_id}")
+
+            return jsonify({
+                'success': True,
+                'message': 'Η πληρωμή ολοκληρώθηκε επιτυχώς!',
+                'transaction_id': invoice.transaction_id
+            })
+
+        else:
+            # --- ΑΠΟΤΥΧΙΑ ---
+            print(f"❌ Αποτυχία POS: {result['message']}")
+            return jsonify({'success': False, 'message': result['message']}), 500
+
+    except Exception as e:
+        print(f"System Error: {e}")
+        return jsonify({'success': False, 'message': f'Σφάλμα συστήματος: {str(e)}'}), 500

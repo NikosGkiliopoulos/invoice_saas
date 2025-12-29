@@ -3,116 +3,164 @@
 {% block title %}Τα Παραστατικά μου{% endblock %}
 
 {% block content %}
-<div class="max-w-7xl mx-auto mt-8">
+<div class="max-w-7xl mx-auto mt-8 px-4 sm:px-6 lg:px-8">
 
     <div class="flex justify-between items-center mb-6">
         <h2 class="text-2xl font-bold text-gray-800">Λίστα Παραστατικών</h2>
-        <a href="{{ url_for('main.new_invoice') }}" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded shadow flex items-center gap-2">
-            <span>+</span> Νέο Τιμολόγιο
+        <a href="{{ url_for('main.new_invoice') }}" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded shadow flex items-center gap-2 text-sm sm:text-base">
+            <span>+</span> <span class="hidden sm:inline">Νέο Τιμολόγιο</span><span class="sm:hidden">Νέο</span>
         </a>
     </div>
 
-    <div class="bg-white shadow-md rounded-lg overflow-hidden">
+    <div class="grid grid-cols-1 gap-4 md:hidden">
+        {% for inv in invoices %}
+        <div class="bg-white p-4 rounded-lg shadow border border-gray-200">
+
+            <div class="flex justify-between items-start mb-3">
+                <div>
+                    <span class="text-lg font-bold text-gray-800">#{{ inv.number }}</span>
+                    <span class="text-xs text-gray-500 block">{{ inv.issue_date.strftime('%d/%m/%Y') }}</span>
+                </div>
+                <div>
+                    {% if inv.mydata_mark %}
+                    <span class="px-2 py-1 text-xs font-semibold rounded-full bg-green-100 text-green-800">Sent</span>
+                    {% else %}
+                    <span class="px-2 py-1 text-xs font-semibold rounded-full bg-gray-100 text-gray-800">Draft</span>
+                    {% endif %}
+                </div>
+            </div>
+
+            <div class="mb-4">
+                <div class="text-sm text-gray-600 mb-1 truncate">{{ inv.customer_name }}</div>
+                <div class="text-xl font-bold text-blue-600">{{ "%.2f"|format(inv.total_value) }} €</div>
+            </div>
+
+            <div class="grid grid-cols-3 gap-2 border-t pt-3">
+                <a href="{{ url_for('main.print_invoice', invoice_id=inv.id) }}" target="_blank" class="flex flex-col items-center justify-center text-blue-600 hover:bg-blue-50 p-1 rounded">
+                    <span class="text-xl">📄</span>
+                    <span class="text-[10px] font-bold uppercase">PDF</span>
+                </a>
+
+                {% if not inv.is_paid %}
+                <button onclick="payWithPos({{ inv.id }}, {{ inv.total_value }})" class="flex flex-col items-center justify-center text-indigo-600 hover:bg-indigo-50 p-1 rounded">
+                    <span class="text-xl">💳</span>
+                    <span class="text-[10px] font-bold uppercase">POS Pay</span>
+                </button>
+                {% else %}
+                <div class="flex flex-col items-center justify-center text-green-600 p-1">
+                    <span class="text-xl">✅</span>
+                    <span class="text-[10px] font-bold uppercase">Paid</span>
+                </div>
+                {% endif %}
+
+                {% if not inv.mydata_mark %}
+                <form action="{{ url_for('main.send_to_mydata', invoice_id=inv.id) }}" method="POST" onsubmit="return confirm('Αποστολή στο myDATA;');" class="w-full h-full">
+                    <button type="submit" class="flex flex-col items-center justify-center w-full h-full text-green-600 hover:bg-green-50 p-1 rounded">
+                        <span class="text-xl">☁️</span>
+                        <span class="text-[10px] font-bold uppercase">myDATA</span>
+                    </button>
+                </form>
+                {% else %}
+                <div class="flex flex-col items-center justify-center text-gray-400 p-1" title="MARK: {{ inv.mydata_mark }}">
+                    <span class="text-xl">🔒</span>
+                    <span class="text-[10px] font-bold uppercase">Sent</span>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+        {% else %}
+        <div class="text-center text-gray-500 py-10 bg-white rounded shadow">
+            Δεν βρέθηκαν παραστατικά.
+        </div>
+        {% endfor %}
+    </div>
+
+    <div class="hidden md:block bg-white shadow-md rounded-lg overflow-hidden">
         <table class="min-w-full leading-normal">
             <thead>
                 <tr>
-                    <th class="px-5 py-3 border-b-2 border-gray-200 bg-gray-100 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
-                        Ημ/νια
-                    </th>
-                    <th class="px-5 py-3 border-b-2 border-gray-200 bg-gray-100 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
-                        Αριθμός
-                    </th>
-                    <th class="px-5 py-3 border-b-2 border-gray-200 bg-gray-100 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
-                        Πελάτης
-                    </th>
-                    <th class="px-5 py-3 border-b-2 border-gray-200 bg-gray-100 text-right text-xs font-semibold text-gray-600 uppercase tracking-wider">
-                        Καθαρή Αξία
-                    </th>
-                    <th class="px-5 py-3 border-b-2 border-gray-200 bg-gray-100 text-right text-xs font-semibold text-gray-600 uppercase tracking-wider">
-                        ΦΠΑ
-                    </th>
-                    <th class="px-5 py-3 border-b-2 border-gray-200 bg-gray-100 text-right text-xs font-semibold text-gray-600 uppercase tracking-wider">
-                        Σύνολο
-                    </th>
-                    <th class="px-5 py-3 border-b-2 border-gray-200 bg-gray-100 text-center text-xs font-semibold text-gray-600 uppercase tracking-wider">
-                        Κατάσταση
-                    </th>
-                    <th class="px-5 py-3 border-b-2 border-gray-200 bg-gray-100"></th>
+                    <th class="px-5 py-3 border-b-2 border-gray-200 bg-gray-100 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Ημ/νια</th>
+                    <th class="px-5 py-3 border-b-2 border-gray-200 bg-gray-100 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Αριθμός</th>
+                    <th class="px-5 py-3 border-b-2 border-gray-200 bg-gray-100 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Πελάτης</th>
+                    <th class="px-5 py-3 border-b-2 border-gray-200 bg-gray-100 text-right text-xs font-semibold text-gray-600 uppercase tracking-wider">Καθαρή Αξία</th>
+                    <th class="px-5 py-3 border-b-2 border-gray-200 bg-gray-100 text-right text-xs font-semibold text-gray-600 uppercase tracking-wider">ΦΠΑ</th>
+                    <th class="px-5 py-3 border-b-2 border-gray-200 bg-gray-100 text-right text-xs font-semibold text-gray-600 uppercase tracking-wider">Σύνολο</th>
+                    <th class="px-5 py-3 border-b-2 border-gray-200 bg-gray-100 text-center text-xs font-semibold text-gray-600 uppercase tracking-wider">Κατάσταση</th>
+                    <th class="px-5 py-3 border-b-2 border-gray-200 bg-gray-100 text-right text-xs font-semibold text-gray-600 uppercase tracking-wider">Ενέργειες</th>
                 </tr>
             </thead>
            <tbody>
                 {% for inv in invoices %}
                 <tr class="hover:bg-gray-50 border-b border-gray-200">
-                    <td class="px-5 py-4 text-sm text-gray-700">
-                        {{ inv.issue_date.strftime('%d/%m/%Y') }}
-                    </td>
-
-                    <td class="px-5 py-4 text-sm font-bold text-gray-800">
-                        #{{ inv.number }} <span class="text-xs font-normal text-gray-500">({{ inv.series }})</span>
-                    </td>
-
-                    <td class="px-5 py-4 text-sm text-gray-700">
-                        {{ inv.customer.name }}
-                    </td>
-
-                    <td class="px-5 py-4 text-sm text-right text-gray-700">
-                        {{ "%.2f"|format(inv.net_value) }} €
-                    </td>
-
-                    <td class="px-5 py-4 text-sm text-right text-gray-500">
-                        {{ "%.2f"|format(inv.vat_value) }} €
-                    </td>
-
-                    <td class="px-5 py-4 text-sm text-right font-bold text-blue-600">
-                        {{ "%.2f"|format(inv.total_value) }} €
-                    </td>
-
+                    <td class="px-5 py-4 text-sm text-gray-700">{{ inv.issue_date.strftime('%d/%m/%Y') }}</td>
+                    <td class="px-5 py-4 text-sm font-bold text-gray-800">#{{ inv.number }} <span class="text-xs font-normal text-gray-500">({{ inv.series }})</span></td>
+                    <td class="px-5 py-4 text-sm text-gray-700 truncate max-w-xs" title="{{ inv.customer_name }}">{{ inv.customer_name }}</td>
+                    <td class="px-5 py-4 text-sm text-right text-gray-700">{{ "%.2f"|format(inv.net_value) }} €</td>
+                    <td class="px-5 py-4 text-sm text-right text-gray-500">{{ "%.2f"|format(inv.vat_value) }} €</td>
+                    <td class="px-5 py-4 text-sm text-right font-bold text-blue-600">{{ "%.2f"|format(inv.total_value) }} €</td>
                     <td class="px-5 py-4 text-center">
                         {% if inv.mydata_mark %}
-                        <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800">
-                            Στάλθηκε
-                        </span>
+                        <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800">Sent</span>
                         {% else %}
-                        <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-gray-100 text-gray-800">
-                            Πρόχειρο
-                        </span>
+                        <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-gray-100 text-gray-800">Draft</span>
                         {% endif %}
                     </td>
-
                     <td class="px-5 py-4 text-right text-sm">
-                        <div class="flex flex-col items-end gap-2">
-                            <a href="{{ url_for('main.print_invoice', invoice_id=inv.id) }}" target="_blank" class="text-blue-600 hover:text-blue-900 font-bold text-xs uppercase cursor-pointer">
-                                Προβολή PDF
-                            </a>
+                        <div class="flex flex-col items-end gap-3">
+                            <a href="{{ url_for('main.print_invoice', invoice_id=inv.id) }}" target="_blank" class="text-blue-600 hover:text-blue-900 font-bold text-xs uppercase cursor-pointer">📄 Προβολή PDF</a>
+
+                            {% if not inv.is_paid %}
+                                <button onclick="payWithPos({{ inv.id }}, {{ inv.total_value }})" class="flex items-center gap-1 text-white bg-indigo-600 hover:bg-indigo-700 px-3 py-1 rounded text-xs font-bold shadow transition duration-150"><span>💳</span> POS Pay</button>
+                            {% else %}
+                                <div class="flex items-center text-green-600 text-xs font-bold" title="Transaction ID: {{ inv.transaction_id }}">
+                                    <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg> Πληρώθηκε
+                                </div>
+                            {% endif %}
+
                             {% if not inv.mydata_mark %}
-                                <form action="{{ url_for('main.send_to_mydata', invoice_id=inv.id) }}" method="POST" onsubmit="return confirm('Είστε σίγουροι ότι θέλετε να στείλετε το παραστατικό στην ΑΑΔΕ;');">
-                                    <button type="submit" class="flex items-center gap-1 text-white bg-green-600 hover:bg-green-700 px-3 py-1 rounded text-xs font-bold shadow transition duration-150">
-                                        <span>☁️</span> myDATA
-                                    </button>
+                                <form action="{{ url_for('main.send_to_mydata', invoice_id=inv.id) }}" method="POST" onsubmit="return confirm('Αποστολή στην ΑΑΔΕ;');">
+                                    <button type="submit" class="flex items-center gap-1 text-white bg-green-600 hover:bg-green-700 px-3 py-1 rounded text-xs font-bold shadow transition duration-150"><span>☁️</span> myDATA</button>
                                 </form>
                             {% else %}
-                                <div class="text-right">
-                                    <div class="flex items-center justify-end text-green-600 text-xs font-bold mb-1">
-                                        <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
-                                        Επιτυχία
-                                    </div>
-                                    <div class="text-[10px] text-gray-500 font-mono bg-gray-50 px-2 py-1 rounded border border-gray-200" title="UID: {{ inv.mydata_uid }}">
-                                        MARK: {{ inv.mydata_mark }}
-                                    </div>
+                                <div class="text-right mt-1">
+                                    <div class="text-[10px] text-gray-500 font-mono bg-gray-50 px-2 py-1 rounded border border-gray-200" title="UID: {{ inv.mydata_uid }}">MARK: {{ inv.mydata_mark }}</div>
                                 </div>
                             {% endif %}
                         </div>
                     </td>
                 </tr>
                 {% else %}
-                <tr>
-                    <td colspan="8" class="px-5 py-10 text-center text-gray-500">
-                        Δεν βρέθηκαν παραστατικά. Ξεκινήστε εκδίδοντας το πρώτο σας τιμολόγιο!
-                    </td>
-                </tr>
+                <tr><td colspan="8" class="px-5 py-10 text-center text-gray-500">Δεν βρέθηκαν παραστατικά.</td></tr>
                 {% endfor %}
             </tbody>
         </table>
     </div>
 </div>
+
+<script>
+    function payWithPos(invoiceId, amount) {
+        if (!confirm(`Να σταλεί εντολή στο τερματικό για χρέωση ${amount.toFixed(2)}€;`)) return;
+
+        alert('⏳ Η εντολή στάλθηκε στο POS!\n\nΠαρακαλώ περιμένετε να πληρώσει ο πελάτης...\n(Μην κλείσετε αυτό το παράθυρο μέχρι να ακουστεί το μπιπ)');
+
+        fetch(`/invoices/${invoiceId}/pay-pos`, {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'}
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                alert('✅ ' + data.message);
+                location.reload();
+            } else {
+                alert('❌ Σφάλμα: ' + data.message);
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('❌ Υπήρξε πρόβλημα επικοινωνίας με τον server.');
+        });
+    }
+</script>
+
 {% endblock %}

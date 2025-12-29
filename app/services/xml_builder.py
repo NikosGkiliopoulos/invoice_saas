@@ -7,7 +7,7 @@ class XMLBuilder:
     def create_invoice_xml(invoice, company_config):
         """
         Δημιουργεί το XML για ένα τιμολόγιο (myDATA v1.0.9).
-        Υπολογίζει αυτόματα τα σύνολα από τις γραμμές για αποφυγή λαθών.
+        Διορθώνει το Error 101 αποκρύπτοντας το counterpart στη Λιανική.
         """
 
         # 1. Namespaces & Formatters
@@ -24,7 +24,7 @@ class XMLBuilder:
         xml_parts.append(f'<InvoicesDoc xmlns="{xmlns}" xmlns:icls="{xmlns_icls}">')
         xml_parts.append('<invoice>')
 
-        # --- ISSUER ---
+        # --- ISSUER (Εκδότης) ---
         xml_parts.append(f"""
             <issuer>
                 <vatNumber>{company_config['afm']}</vatNumber>
@@ -33,21 +33,28 @@ class XMLBuilder:
             </issuer>
         """)
 
-        # --- COUNTERPART ---
-        # Ελέγχουμε αν υπάρχει ο πελάτης και το ΑΦΜ του
-        try:
-            customer_afm = invoice.customer.afm
-        except AttributeError:
-            customer_afm = ""  # Αν δεν υπάρχει customer object
+        # --- COUNTERPART (Πελάτης) ---
+        # Προσπάθεια εύρεσης ΑΦΜ (κοιτάμε πρώτα το snapshot, μετά τη σχέση)
+        customer_afm = getattr(invoice, 'customer_afm', None)
 
-        xml_parts.append('<counterpart>')
+        # Αν το snapshot είναι κενό, δοκιμάζουμε από το relationship (για παλιά records)
+        if not customer_afm and hasattr(invoice, 'customer') and invoice.customer:
+            customer_afm = invoice.customer.afm
+
+        # ΣΗΜΑΝΤΙΚΗ ΔΙΟΡΘΩΣΗ:
+        # Αν υπάρχει ΑΦΜ -> Προσθέτουμε τον Counterpart.
+        # Αν ΔΕΝ υπάρχει (Λιανική) -> ΔΕΝ βάζουμε τίποτα.
         if customer_afm:
-            xml_parts.append(f'<vatNumber>{customer_afm}</vatNumber>')
-            xml_parts.append('<country>GR</country>')
+            xml_parts.append(f"""
+                <counterpart>
+                    <vatNumber>{customer_afm}</vatNumber>
+                    <country>GR</country>
+                    <branch>0</branch>
+                </counterpart>
+            """)
         else:
-            xml_parts.append('<country>GR</country>')
-        xml_parts.append('<branch>0</branch>')
-        xml_parts.append('</counterpart>')
+            # Στη λιανική χωρίς ΑΦΜ, το myDATA απαιτεί να ΜΗΝ υπάρχει καθόλου το counterpart block
+            pass
 
         # --- HEADER ---
         xml_parts.append(f"""
@@ -61,8 +68,8 @@ class XMLBuilder:
         """)
 
         # --- PAYMENT METHODS ---
-        # Χρησιμοποιούμε το total_value του invoice, ή 0 αν είναι None
-        total_pay = invoice.total_value if hasattr(invoice, 'total_value') else 0
+        # Χρησιμοποιούμε το total_value ή 0
+        total_pay = invoice.total_value if getattr(invoice, 'total_value', None) else 0
 
         xml_parts.append(f"""
             <paymentMethods>
@@ -74,17 +81,14 @@ class XMLBuilder:
         """)
 
         # --- DETAILS & CALCULATION ---
-        # Μεταβλητές για υπολογισμό συνόλων ON-THE-FLY
         calc_total_net = 0.0
         calc_total_vat = 0.0
         classification_totals = defaultdict(float)
 
         for index, item in enumerate(invoice.items, 1):
-            # Λήψη τιμών γραμμής (με προστασία αν είναι None)
             line_net = item.net_value or 0.0
             line_vat = item.vat_amount or 0.0
 
-            # Αθροισμός για το Summary
             calc_total_net += line_net
             calc_total_vat += line_vat
 
@@ -110,8 +114,6 @@ class XMLBuilder:
         calc_total_gross = calc_total_net + calc_total_vat
 
         # --- SUMMARY ---
-        # Χρησιμοποιούμε τις υπολογισμένες μεταβλητές (calc_...) και όχι τα πεδία του invoice object
-        # Αυτό λύνει το πρόβλημα "'Invoice' object has no attribute..."
         xml_parts.append(f"""
             <invoiceSummary>
                 <totalNetValue>{fmt(calc_total_net)}</totalNetValue>

@@ -10,7 +10,12 @@ class Invoice(db.Model):
 
     # Σύνδεση με User (Εκδότης) και Customer (Λήπτης)
     user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
-    customer_id = db.Column(db.Integer, db.ForeignKey('customers.id'), nullable=False)
+    customer_id = db.Column(db.Integer, db.ForeignKey('customers.id'), nullable=True)
+
+    customer_name = db.Column(db.String(200), nullable=True)
+    customer_afm = db.Column(db.String(20), nullable=True)
+    customer_address = db.Column(db.String(200), nullable=True)
+    customer_doy = db.Column(db.String(100), nullable=True)
 
     # --- Στοιχεία Παραστατικού ---
     series = db.Column(db.String(10), default='A')  # Σειρά (π.χ. Α)
@@ -32,6 +37,9 @@ class Invoice(db.Model):
     # Τρόπος Πληρωμής (3=Μετρητά/Κατάθεση, 5=Κάρτα, κλπ)
     payment_method = db.Column(db.String(50), default="3")
     is_paid = db.Column(db.Boolean, default=False)
+
+    transaction_id = db.Column(db.String(255), nullable=True)  # Το Transaction ID της Viva
+    paid_at = db.Column(db.DateTime, nullable=True)  # Πότε έγινε η πληρωμή
 
     # Status: 'draft' (Πρόχειρο), 'sent' (Εστάλη myDATA), 'cancelled' (Ακυρώθηκε)
     status = db.Column(db.String(20), default='draft')
