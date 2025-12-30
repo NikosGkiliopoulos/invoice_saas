@@ -42,7 +42,7 @@
                 </a>
 
                 {% if not inv.is_paid %}
-                <button onclick="payWithPos({{ inv.id }}, {{ inv.total_value }})" class="flex flex-col items-center justify-center text-indigo-600 hover:bg-indigo-50 p-1 rounded">
+                <button onclick="payWithPos({{ inv.id }}, {{ inv.total_value }}, this)" class="flex flex-col items-center justify-center text-indigo-600 hover:bg-indigo-50 p-1 rounded">
                     <span class="text-xl">💳</span>
                     <span class="text-[10px] font-bold uppercase">POS Pay</span>
                 </button>
@@ -110,8 +110,17 @@
                             <a href="{{ url_for('main.print_invoice', invoice_id=inv.id) }}" target="_blank" class="text-blue-600 hover:text-blue-900 font-bold text-xs uppercase cursor-pointer">📄 Προβολή PDF</a>
 
                             {% if not inv.is_paid %}
-                                <button onclick="payWithPos({{ inv.id }}, {{ inv.total_value }})" class="flex items-center gap-1 text-white bg-indigo-600 hover:bg-indigo-700 px-3 py-1 rounded text-xs font-bold shadow transition duration-150"><span>💳</span> POS Pay</button>
+                                {# Έλεγχος: Εμφάνιση κουμπιού ΜΟΝΟ αν ο κωδικός είναι '7' (POS) #}
+                                {% if inv.payment_method|string == '7' %}
+                                    <button onclick="payWithPos({{ inv.id }}, {{ inv.total_value }}, this)" class="flex items-center gap-1 text-white bg-indigo-600 hover:bg-indigo-700 px-3 py-1 rounded text-xs font-bold shadow transition duration-150"><span>💳</span> POS Pay</button>
+                                {% else %}
+                                    {# Αν είναι Μετρητά ή άλλο, δείχνουμε απλά κείμενο #}
+                                    <span class="text-xs text-gray-500 font-medium border border-gray-200 bg-gray-50 px-2 py-1 rounded cursor-default">
+                                        {% if inv.payment_method|string == '3' %}💵 Μετρητά{% else %}Άλλος Τρόπος{% endif %}
+                                    </span>
+                                {% endif %}
                             {% else %}
+                                {# Αν έχει πληρωθεί #}
                                 <div class="flex items-center text-green-600 text-xs font-bold" title="Transaction ID: {{ inv.transaction_id }}">
                                     <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg> Πληρώθηκε
                                 </div>
@@ -138,27 +147,53 @@
 </div>
 
 <script>
-    function payWithPos(invoiceId, amount) {
-        if (!confirm(`Να σταλεί εντολή στο τερματικό για χρέωση ${amount.toFixed(2)}€;`)) return;
+    // ΣΗΜΑΝΤΙΚΗ ΑΛΛΑΓΗ: Η συνάρτηση δέχεται τώρα και το btnElement (το κουμπί)
+    function payWithPos(invoiceId, amount, btnElement) {
 
-        alert('⏳ Η εντολή στάλθηκε στο POS!\n\nΠαρακαλώ περιμένετε να πληρώσει ο πελάτης...\n(Μην κλείσετε αυτό το παράθυρο μέχρι να ακουστεί το μπιπ)');
+        // 1. Επιβεβαίωση
+        if (!confirm(`Να σταλεί εντολή στο τερματικό για χρέωση ${amount}€;`)) {
+            return;
+        }
 
+        // 2. Κρατάμε το αρχικό κείμενο
+        const originalText = btnElement.innerText;
+
+        // 3. Αλλάζουμε το ΣΥΓΚΕΚΡΙΜΕΝΟ κουμπί που πατήθηκε
+        btnElement.innerText = "⏳ Αναμονή...";
+        btnElement.disabled = true;
+        btnElement.classList.add('opacity-50', 'cursor-not-allowed'); // Λίγο style για να φαίνεται ανενεργό
+
+        console.log("🚀 Στέλνω εντολή στο backend...");
+
+        // 4. Κλήση στον Server
         fetch(`/invoices/${invoiceId}/pay-pos`, {
             method: 'POST',
-            headers: {'Content-Type': 'application/json'}
+            headers: {
+                'Content-Type': 'application/json'
+            }
         })
         .then(response => response.json())
         .then(data => {
+            console.log("Απάντηση Server:", data);
+
             if (data.success) {
-                alert('✅ ' + data.message);
-                location.reload();
+                alert("✅ " + data.message);
+                location.reload(); // Ανανέωση σελίδας για να φανεί η πληρωμή
             } else {
-                alert('❌ Σφάλμα: ' + data.message);
+                alert("❌ " + data.message);
+                // Επαναφορά κουμπιού σε περίπτωση λάθους
+                btnElement.innerText = originalText;
+                btnElement.disabled = false;
+                btnElement.classList.remove('opacity-50', 'cursor-not-allowed');
             }
         })
         .catch(error => {
             console.error('Error:', error);
-            alert('❌ Υπήρξε πρόβλημα επικοινωνίας με τον server.');
+            alert("Σφάλμα επικοινωνίας με τον server.");
+            // Επαναφορά κουμπιού
+            btnElement.innerText = originalText;
+            btnElement.disabled = false;
+            btnElement.classList.remove('opacity-50', 'cursor-not-allowed');
         });
     }
 </script>

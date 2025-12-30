@@ -452,21 +452,22 @@ def pay_invoice_pos(invoice_id):
         print(f"💳 Εκκίνηση POS για #{invoice.number} - Ποσό: {invoice.total_value}€")
 
         # Κλήση στο τερματικό
-        # Reference: INV-{ID} για να το αναγνωρίζεις στο Viva Dashboard
+        # ΔΙΟΡΘΩΣΗ: Χρησιμοποιούμε τα ονόματα ορισμάτων όπως ορίστηκαν στο viva_pos.py (amount, invoice_id)
         result = viva_service.process_payment(
-            amount_euros=invoice.total_value,
-            reference_id=f"INV-{invoice.id}"
+            amount=invoice.total_value,
+            invoice_id=invoice.id
         )
 
         # 3. Διαχείριση Αποτελέσματος
         if result['success']:
             # --- ΕΠΙΤΥΧΙΑ ---
-            viva_data = result['data']
 
             # Ενημέρωση Βάσης
             invoice.is_paid = True
-            invoice.payment_method = '5'  # 5 = Κάρτα (για το myDATA)
-            invoice.transaction_id = viva_data.get('transactionId')
+            invoice.payment_method = '5'  # 5 = Κάρτα (κωδικός myDATA)
+
+            # ΔΙΟΡΘΩΣΗ: Το transaction_id έρχεται απευθείας στο result, όχι μέσα σε 'data'
+            invoice.transaction_id = result.get('transaction_id', 'Unknown')
             invoice.paid_at = datetime.now()
 
             db.session.commit()
@@ -480,10 +481,12 @@ def pay_invoice_pos(invoice_id):
             })
 
         else:
-            # --- ΑΠΟΤΥΧΙΑ ---
+            # --- ΑΠΟΤΥΧΙΑ --- (π.χ. Timeout ή Cancel από πελάτη)
             print(f"❌ Αποτυχία POS: {result['message']}")
             return jsonify({'success': False, 'message': result['message']}), 500
 
     except Exception as e:
         print(f"System Error: {e}")
+        # Καλό είναι να κάνουμε rollback αν σκάσει η βάση, αν και εδώ είμαστε σε try block πριν το commit
+        db.session.rollback()
         return jsonify({'success': False, 'message': f'Σφάλμα συστήματος: {str(e)}'}), 500

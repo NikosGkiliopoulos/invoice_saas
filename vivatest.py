@@ -6,7 +6,7 @@ import datetime
 # --- ΣΤΟΙΧΕΙΑ (POS API CREDENTIALS) ---
 # ΠΡΟΣΟΧΗ: Θέλουμε τα κλειδιά από την ενότητα "POS APIs Credentials"
 CLIENT_ID = "5aouqmbz2uviu36z96qqez2cutvy2zcxf3d1wat91ynq4.apps.vivapayments.com"
-CLIENT_SECRET = "5og88z3o21JBEQ5op5KfFPKzOCW95A"  # <--- ΤΟ ΖΗΤΟΥΜΕΝΟ
+CLIENT_SECRET = "S58S853L1Hy8YTRjfWD14BGDnRu19F"  # <--- ΤΟ ΖΗΤΟΥΜΕΝΟ
 
 # TERMINAL ID (Από το Sales > Physical Payments ή το App)
 TERMINAL_ID = "16013397"
