@@ -9,7 +9,7 @@ from app.main.forms import ProductServiceForm  # <-- Import τη νέα φόρμ
 import os
 from app.models.invoice import Invoice, InvoiceItem
 import json
-from datetime import datetime
+from datetime import datetime, date
 from app.services.data_loader import DataLoader
 from app.services.xml_builder import XMLBuilder
 from app.services.my_data_api import MyDataAPI
@@ -17,15 +17,47 @@ import qrcode
 from io import BytesIO
 import base64
 from app.services.viva_pos import VivaTerminalService  # <-- ΝΕΟ IMPORT
-
+from sqlalchemy import func          # Για τα μαθηματικά της βάσης (SUM, EXTRACT)
 
 # Η αρχική σελίδα (Dashboard)
 @main.route('/')
 @main.route('/dashboard')
 @login_required
 def dashboard():
-    return render_template('dashboard.html', user=current_user)
+    today = date.today()
+    current_month = today.month
+    current_year = today.year
 
+    # 1. Τζίρος Μήνα (Χρήση issue_date)
+    monthly_revenue = db.session.query(func.sum(Invoice.total_value))\
+        .filter(func.extract('month', Invoice.issue_date) == current_month)\
+        .filter(func.extract('year', Invoice.issue_date) == current_year)\
+        .scalar() or 0.0
+
+    # 2. Τζίρος Σήμερα (Χρήση issue_date)
+    today_revenue = db.session.query(func.sum(Invoice.total_value))\
+        .filter(Invoice.issue_date == today)\
+        .scalar() or 0.0
+
+    # 3. Απλήρωτα
+    pending_amount = db.session.query(func.sum(Invoice.total_value))\
+        .filter(Invoice.is_paid == False)\
+        .scalar() or 0.0
+
+    # 4. Σύνολο Πελατών
+    total_customers = Customer.query.count()
+
+    # 5. Πρόσφατα Τιμολόγια (Ταξινόμηση βάσει issue_date και id)
+    recent_invoices = Invoice.query.order_by(Invoice.issue_date.desc(), Invoice.id.desc()).limit(5).all()
+
+    stats = {
+        'monthly_revenue': monthly_revenue,
+        'today_revenue': today_revenue,
+        'pending_amount': pending_amount,
+        'total_customers': total_customers
+    }
+
+    return render_template('dashboard.html', stats=stats, recent_invoices=recent_invoices, user=current_user)
 
 # Η σελίδα Ρυθμίσεων
 @main.route('/settings', methods=['GET', 'POST'])

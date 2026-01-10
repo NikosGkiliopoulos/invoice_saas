@@ -1,30 +1,203 @@
 {% extends "base.html" %}
 
-{% block title %}Dashboard{% endblock %}
+{% block title %}Επισκόπηση | Dashboard{% endblock %}
 
 {% block content %}
-    <div class="bg-white shadow overflow-hidden sm:rounded-lg">
-        <div class="px-4 py-5 sm:px-6">
-            <h3 class="text-lg leading-6 font-medium text-gray-900">
-                Καλωσήρθες, {{ user.email }}
-            </h3>
-            <p class="mt-1 max-w-2xl text-sm text-gray-500">
-                Αυτό είναι το κεντρικό πάνελ ελέγχου.
+<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-8">
+
+    <div class="md:flex md:items-center md:justify-between mb-8">
+        <div class="flex-1 min-w-0">
+            <h2 class="text-2xl font-bold leading-7 text-gray-900 sm:text-3xl sm:truncate">
+                Επισκόπηση Επιχείρησης
+            </h2>
+            <p class="mt-1 text-sm text-gray-500">
+                Καλωσήρθες, <span class="font-semibold text-gray-800">{{ current_user.email }}</span>
             </p>
         </div>
-        <div class="border-t border-gray-200 px-4 py-5 sm:p-0">
-            <dl class="sm:divide-y sm:divide-gray-200">
-                <div class="py-4 sm:py-5 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6">
-                    <dt class="text-sm font-medium text-gray-500">Κατάσταση Συνδρομής</dt>
-                    <dd class="mt-1 text-sm text-gray-900 sm:mt-0 sm:col-span-2">
-                        {% if user.plan %}
-                            {{ user.plan.name }}
-                        {% else %}
-                            Δωρεάν
-                        {% endif %}
-                    </dd>
-                </div>
-            </dl>
+        <div class="mt-4 flex md:mt-0 md:ml-4">
+            <span class="inline-flex rounded-md shadow-sm">
+                <a href="{{ url_for('main.new_invoice') }}" class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none shadow-lg transform transition hover:scale-105">
+                    <svg class="-ml-1 mr-2 h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+                    </svg>
+                    Νέο Παραστατικό
+                </a>
+            </span>
         </div>
     </div>
+
+    <div class="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-4 mb-8">
+
+        <div class="bg-white overflow-hidden shadow rounded-lg border-l-4 border-green-500">
+            <div class="p-5">
+                <div class="flex items-center">
+                    <div class="flex-shrink-0">
+                        <svg class="h-6 w-6 text-gray-400" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                        </svg>
+                    </div>
+                    <div class="ml-5 w-0 flex-1">
+                        <dl>
+                            <dt class="text-sm font-medium text-gray-500 truncate">Τζίρος Μήνα</dt>
+                            <dd>
+                                <div class="text-lg font-bold text-gray-900">{{ "%.2f"|format(stats.monthly_revenue) }} €</div>
+                            </dd>
+                        </dl>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="bg-white overflow-hidden shadow rounded-lg border-l-4 border-blue-500">
+            <div class="p-5">
+                <div class="flex items-center">
+                    <div class="flex-shrink-0">
+                        <svg class="h-6 w-6 text-gray-400" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                        </svg>
+                    </div>
+                    <div class="ml-5 w-0 flex-1">
+                        <dl>
+                            <dt class="text-sm font-medium text-gray-500 truncate">Σημερινές Πωλήσεις</dt>
+                            <dd>
+                                <div class="text-lg font-bold text-gray-900">{{ "%.2f"|format(stats.today_revenue) }} €</div>
+                            </dd>
+                        </dl>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="bg-white overflow-hidden shadow rounded-lg border-l-4 border-red-500">
+            <div class="p-5">
+                <div class="flex items-center">
+                    <div class="flex-shrink-0">
+                        <svg class="h-6 w-6 text-gray-400" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                        </svg>
+                    </div>
+                    <div class="ml-5 w-0 flex-1">
+                        <dl>
+                            <dt class="text-sm font-medium text-gray-500 truncate">Εκκρεμείς Εισπράξεις</dt>
+                            <dd>
+                                <div class="text-lg font-bold text-red-600">{{ "%.2f"|format(stats.pending_amount) }} €</div>
+                            </dd>
+                        </dl>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="bg-white overflow-hidden shadow rounded-lg border-l-4 border-indigo-500">
+            <div class="p-5">
+                <div class="flex items-center">
+                    <div class="flex-shrink-0">
+                        <svg class="h-6 w-6 text-gray-400" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0z" />
+                        </svg>
+                    </div>
+                    <div class="ml-5 w-0 flex-1">
+                        <dl>
+                            <dt class="text-sm font-medium text-gray-500 truncate">Σύνολο Πελατών</dt>
+                            <dd>
+                                <div class="text-lg font-bold text-gray-900">{{ stats.total_customers }}</div>
+                            </dd>
+                        </dl>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+
+        <div class="lg:col-span-2">
+            <div class="bg-white shadow rounded-lg">
+                <div class="px-4 py-5 border-b border-gray-200 sm:px-6 flex justify-between items-center">
+                    <h3 class="text-lg leading-6 font-medium text-gray-900">Πρόσφατα Παραστατικά</h3>
+                    <a href="{{ url_for('main.invoices') }}" class="text-sm text-blue-600 hover:text-blue-500 font-medium">Προβολή όλων &rarr;</a>
+                </div>
+                <div class="overflow-x-auto">
+                    <table class="min-w-full divide-y divide-gray-200">
+                        <thead class="bg-gray-50">
+                            <tr>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Ημερομηνία</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Πελάτης</th>
+                                <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Ποσό</th>
+                                <th class="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">Κατάσταση</th>
+                            </tr>
+                        </thead>
+                        <tbody class="bg-white divide-y divide-gray-200">
+                            {% for inv in recent_invoices %}
+                            <tr class="hover:bg-gray-50 transition">
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ inv.issue_date.strftime('%d/%m/%Y') }}</td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                                    {% if inv.customer %}
+                                        {{ inv.customer.name }}
+                                    {% else %}
+                                        Πελάτης Λιανικής
+                                    {% endif %}
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-right font-bold">{{ "%.2f"|format(inv.total_value) }} €</td>
+                                <td class="px-6 py-4 whitespace-nowrap text-center">
+                                    {% if inv.is_paid %}
+                                        <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800">Πληρωμένο</span>
+                                    {% else %}
+                                        <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-red-100 text-red-800">Εκκρεμεί</span>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                            {% else %}
+                            <tr>
+                                <td colspan="4" class="px-6 py-4 text-center text-sm text-gray-500">Δεν υπάρχουν πρόσφατα παραστατικά.</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <div class="space-y-8">
+
+            <div class="bg-white shadow rounded-lg p-6">
+                <h3 class="text-lg font-medium text-gray-900 mb-4">Γρήγορες Ενέργειες</h3>
+                <div class="space-y-3">
+                    <a href="{{ url_for('main.customers') }}" class="w-full flex items-center justify-center px-4 py-2 border border-gray-300 shadow-sm text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50">
+                        <span class="mr-2">👤</span> Διαχείριση Πελατών
+                    </a>
+                    <a href="{{ url_for('main.products') }}" class="w-full flex items-center justify-center px-4 py-2 border border-gray-300 shadow-sm text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50">
+                        <span class="mr-2">📦</span> Διαχείριση Προϊόντων
+                    </a>
+                </div>
+            </div>
+
+            <div class="bg-gradient-to-br from-indigo-600 to-purple-700 shadow rounded-lg p-6 text-white">
+                <h3 class="text-lg font-bold mb-2">Η Συνδρομή σου</h3>
+                <div class="flex items-center justify-between mb-4">
+                    <span class="text-indigo-200 text-sm">Πλάνο:</span>
+                    <span class="font-bold bg-white text-indigo-700 px-2 py-1 rounded text-xs uppercase">
+                        {% if current_user.plan %}
+                            {{ current_user.plan.name }}
+                        {% else %}
+                            Basic
+                        {% endif %}
+                    </span>
+                </div>
+                <div class="text-xs text-indigo-200 mb-4">
+                    Το πλάνο περιλαμβάνει απεριόριστα τιμολόγια και σύνδεση myDATA.
+                </div>
+                <div class="space-y-2 text-xs">
+                    <div class="flex items-center gap-2">
+                        <span class="w-2 h-2 bg-green-400 rounded-full"></span> myDATA Connected
+                    </div>
+                    <div class="flex items-center gap-2">
+                        <span class="w-2 h-2 bg-green-400 rounded-full"></span> Database Online
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+</div>
 {% endblock %}

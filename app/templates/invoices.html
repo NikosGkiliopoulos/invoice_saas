@@ -110,17 +110,38 @@
                             <a href="{{ url_for('main.print_invoice', invoice_id=inv.id) }}" target="_blank" class="text-blue-600 hover:text-blue-900 font-bold text-xs uppercase cursor-pointer">📄 Προβολή PDF</a>
 
                             {% if not inv.is_paid %}
-                                {# Έλεγχος: Εμφάνιση κουμπιού ΜΟΝΟ αν ο κωδικός είναι '7' (POS) #}
+
+                                {# --- ΠΕΡΙΠΤΩΣΗ 7: POS (Ενεργό Κουμπί) --- #}
                                 {% if inv.payment_method|string == '7' %}
-                                    <button onclick="payWithPos({{ inv.id }}, {{ inv.total_value }}, this)" class="flex items-center gap-1 text-white bg-indigo-600 hover:bg-indigo-700 px-3 py-1 rounded text-xs font-bold shadow transition duration-150"><span>💳</span> POS Pay</button>
+                                    <button onclick="payWithPos({{ inv.id }}, {{ inv.total_value }}, this)" class="flex items-center gap-1 text-white bg-indigo-600 hover:bg-indigo-700 px-3 py-1 rounded text-xs font-bold shadow transition duration-150">
+                                        <span>💳</span> POS Pay
+                                    </button>
+
+                                {# --- ΥΠΟΛΟΙΠΕΣ ΠΕΡΙΠΤΩΣΕΙΣ (Ενημερωτικά Ταμπελάκια) --- #}
                                 {% else %}
-                                    {# Αν είναι Μετρητά ή άλλο, δείχνουμε απλά κείμενο #}
-                                    <span class="text-xs text-gray-500 font-medium border border-gray-200 bg-gray-50 px-2 py-1 rounded cursor-default">
-                                        {% if inv.payment_method|string == '3' %}💵 Μετρητά{% else %}Άλλος Τρόπος{% endif %}
+                                    <span class="text-xs text-gray-500 font-medium border border-gray-200 bg-gray-50 px-2 py-1 rounded cursor-default whitespace-nowrap">
+                                        {% if inv.payment_method|string == '3' %}
+                                            💵 Μετρητά
+                                        {% elif inv.payment_method|string == '5' %}
+                                            ⏳ Επί Πιστώσει
+                                        {% elif inv.payment_method|string == '1' %}
+                                            🏦 Τράπεζα (GR)
+                                        {% elif inv.payment_method|string == '2' %}
+                                            🌍 Τράπεζα (Εξωτ.)
+                                        {% elif inv.payment_method|string == '4' %}
+                                            🖋️ Επιταγή
+                                        {% elif inv.payment_method|string == '6' %}
+                                            💻 Web Banking
+                                        {% elif inv.payment_method|string == '8' %}
+                                            📱 IRIS Payment
+                                        {% else %}
+                                            Άλλος Τρόπος
+                                        {% endif %}
                                     </span>
                                 {% endif %}
+
                             {% else %}
-                                {# Αν έχει πληρωθεί #}
+                                {# --- ΑΝ ΕΧΕΙ ΠΛΗΡΩΘΕΙ --- #}
                                 <div class="flex items-center text-green-600 text-xs font-bold" title="Transaction ID: {{ inv.transaction_id }}">
                                     <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg> Πληρώθηκε
                                 </div>
