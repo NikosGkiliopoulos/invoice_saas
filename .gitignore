@@ -13,3 +13,5 @@ instance/
 
 # IDE
 .idea/
+vivatest.py
+view_invoice.py
