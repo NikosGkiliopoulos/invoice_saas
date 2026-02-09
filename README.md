@@ -33,40 +33,6 @@
 * **APIs:** REST API (Requests) για επικοινωνία με ΑΑΔΕ.
 * **Tools:** `qrcode`, `xml.etree` για parsing.
 
-## ⚙️ Εγκατάσταση & Εκτέλεση
-
-1.  **Clone το repository:**
-    ```bash
-    git clone [https://github.com/το-username-σου/flask-erp-mydata.git](https://github.com/το-username-σου/flask-erp-mydata.git)
-    cd flask-erp-mydata
-    ```
-
-2.  **Δημιουργία Virtual Environment:**
-    ```bash
-    python -m venv venv
-    source venv/bin/activate  # Για Linux/Mac
-    venv\Scripts\activate     # Για Windows
-    ```
-
-3.  **Εγκατάσταση βιβλιοθηκών:**
-    ```bash
-    pip install -r requirements.txt
-    ```
-
-4.  **Αρχικοποίηση Βάσης Δεδομένων:**
-    ```bash
-    flask shell
-    >>> from app import db
-    >>> db.create_all()
-    >>> exit()
-    ```
-
-5.  **Εκκίνηση Εφαρμογής:**
-    ```bash
-    python app.py
-    ```
-    Η εφαρμογή τρέχει στο: `http://localhost:5000`
-
 ## 🔑 Ρυθμίσεις myDATA
 
 1.  Κάντε Login στην εφαρμογή.
@@ -82,6 +48,7 @@ Aλλες εικονες:
 <img width="1582" height="843" alt="Screenshot 2026-02-09 160041" src="https://github.com/user-attachments/assets/ff6e3dc1-1920-4d34-aa91-aa2a77ea0f13" />
 <img width="1662" height="857" alt="Screenshot 2026-02-09 160104" src="https://github.com/user-attachments/assets/13346708-ee65-47f5-80e5-80139c2e2adb" />
 <img width="1640" height="789" alt="Screenshot 2026-02-09 160305" src="https://github.com/user-attachments/assets/bffcf175-77bf-4312-85f4-7b47857655c1" />
+
 
 
 
